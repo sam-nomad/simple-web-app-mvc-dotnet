@@ -1,7 +1,5 @@
-# ASP.NET Core (.NET Framework)
-# Build and test ASP.NET Core projects targeting the full .NET Framework.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# ASP.NET Core (.NET Framework) pipeline
+# Builds, tests, and publishes build artifacts for ASP.NET Core projects targeting .NET Framework.
 
 trigger:
 - master
@@ -10,17 +8,21 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  solution: '**/*.sln'  # Path to the solution file(s)
+  buildPlatform: 'Any CPU'  # Build platform
+  buildConfiguration: 'Release'  # Build configuration
 
 steps:
+# Install NuGet (Ensures the correct NuGet version is available)
 - task: NuGetToolInstaller@1
 
+
+# Restore NuGet packages for the solution
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
 
+# Build the solution and package it for deployment
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
@@ -28,7 +30,16 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+# Run tests using Visual Studio Test task
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    codeCoverageEnabled: true  # Enable code coverage (Optional)
+
+# Publish build artifacts for release
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(build.artifactStagingDirectory)'  # Path to artifacts
+    artifactName: 'drop'  # Name of the published artifact
+    publishLocation: 'Container'  # Publish to Azure DevOps artifact container
